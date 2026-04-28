@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UniLib — Student Library Portal</title>
+  <style>
+    /* ── Reset & base ──────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy:   #1b304a;
+      --teal:   #008f8c;
+      --teal2:  #00b4b1;
+      --light:  #f4f7fb;
+      --white:  #ffffff;
+      --gray:   #6b7280;
+      --border: #d1d9e0;
+      --red:    #dc2626;
+      --amber:  #d97706;
+      --green:  #16a34a;
+      --shadow: 0 2px 8px rgba(0,0,0,.10);
+      --radius: 10px;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--light);
+      color: #1f2937;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    a { color: var(--teal); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1,h2,h3,h4 { line-height: 1.2; }
+
+    /* ── Navbar ────────────────────────────────────────────────────────── */
+    .navbar {
+      background: var(--navy);
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: .75rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    }
+    .navbar-brand {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+    }
+    .navbar-brand span { color: var(--teal2); }
+    .navbar-links { display: flex; align-items: center; gap: 1.2rem; }
+    .nav-link {
+      color: #cbd5e1;
+      font-size: .95rem;
+      cursor: pointer;
+      padding: .35rem .6rem;
+      border-radius: 6px;
+      transition: background .2s, color .2s;
+    }
+    .nav-link:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .nav-username {
+      background: rgba(0,180,177,.18);
+      color: var(--teal2);
+      font-size: .85rem;
+      font-weight: 600;
+      padding: .3rem .8rem;
+      border-radius: 20px;
+    }
+    .nav-logout {
+      background: none;
+      border: 1px solid #94a3b8;
+      color: #94a3b8;
+      font-size: .85rem;
+      padding: .3rem .8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    .nav-logout:hover { background: rgba(255,255,255,.1); color: #fff; }
+
+    /* ── Views ─────────────────────────────────────────────────────────── */
+    .view { display: none; flex: 1; }
+
+    /* ── Login view ─────────────────────────────────────────────────────── */
+    #view-login {
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--navy) 0%, #264866 60%, #1a5c5a 100%);
+    }
+    .login-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 2.5rem 2.25rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.25);
+    }
+    .login-logo {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+    .login-logo h1 { font-size: 2rem; color: var(--navy); }
+    .login-logo h1 span { color: var(--teal); }
+    .login-logo p { color: var(--gray); font-size: .9rem; margin-top: .3rem; }
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group label {
+      display: block;
+      font-size: .875rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: .35rem;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: .65rem .85rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: .95rem;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(0,143,140,.15);
+    }
+    .error-msg {
+      background: #fef2f2;
+      color: var(--red);
+      border: 1px solid #fecaca;
+      border-radius: 7px;
+      padding: .65rem .9rem;
+      font-size: .875rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .btn {
+      padding: .65rem 1.25rem;
+      border-radius: 8px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background .2s, transform .1s;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-primary { background: var(--teal); color: #fff; width: 100%; }
+    .btn-primary:hover:not(:disabled) { background: #007370; }
+    .login-hint {
+      margin-top: 1.25rem;
+      padding: .75rem;
+      background: #f0fdfa;
+      border-radius: 8px;
+      font-size: .8rem;
+      color: #155e75;
+    }
+    .login-hint strong { display: block; margin-bottom: .3rem; color: var(--teal); }
+
+    /* ── Page header ─────────────────────────────────────────────────────── */
+    .page-header {
+      background: linear-gradient(120deg, var(--navy) 0%, #264866 100%);
+      color: #fff;
+      padding: 2rem 2.5rem;
+    }
+    .page-header h1 { font-size: 1.75rem; }
+    .page-header p  { color: #94a3b8; margin-top: .3rem; font-size: .95rem; }
+
+    /* ── Books view ──────────────────────────────────────────────────────── */
+    .books-container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      width: 100%;
+    }
+    .search-bar {
+      display: flex;
+      gap: .75rem;
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+    }
+    .search-bar input {
+      flex: 1;
+      min-width: 200px;
+      padding: .65rem .9rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .search-bar input:focus { border-color: var(--teal); }
+    .search-bar select {
+      padding: .65rem .9rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: .95rem;
+      outline: none;
+      cursor: pointer;
+    }
+    .loading-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 4px solid #e2e8f0;
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .books-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.25rem;
+    }
+    .book-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      transition: transform .2s, box-shadow .2s;
+      position: relative;
+    }
+    .book-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,.13); }
+    .book-card h3 { font-size: 1rem; color: var(--navy); line-height: 1.3; }
+    .book-author  { font-size: .875rem; color: var(--gray); }
+    .book-meta    { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .avail-count  { font-size: .8rem; color: var(--gray); margin-top: auto; }
+    .avail-badge  {
+      font-size: .7rem;
+      font-weight: 700;
+      padding: .2rem .6rem;
+      border-radius: 20px;
+      align-self: flex-start;
+    }
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-amber { background: #fef9c3; color: #b45309; }
+    .badge-red   { background: #fee2e2; color: #dc2626; }
+    .badge {
+      font-size: .75rem;
+      padding: .2rem .55rem;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .badge-genre { background: #ede9fe; color: #6d28d9; }
+    .badge-year  { background: #e0f2fe; color: #0369a1; }
+    .borrow-btn {
+      margin-top: .5rem;
+      padding: .5rem;
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-weight: 600;
+      font-size: .9rem;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .borrow-btn:hover:not(:disabled) { background: #007370; }
+    .borrow-btn:disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+    .no-results { text-align: center; color: var(--gray); padding: 2rem; grid-column: 1/-1; }
+
+    /* ── My Loans view ─────────────────────────────────────────────────── */
+    .loans-container {
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      width: 100%;
+    }
+    .section-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.75rem;
+    }
+    .section-card h2 {
+      font-size: 1.15rem;
+      color: var(--navy);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .count-badge {
+      background: var(--teal);
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 700;
+      padding: .2rem .6rem;
+      border-radius: 20px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    thead th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 600;
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      padding: .6rem .9rem;
+      text-align: left;
+      border-bottom: 2px solid var(--border);
+    }
+    tbody td {
+      padding: .7rem .9rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #f8fafc; }
+    .overdue-row td { background: #fff5f5 !important; }
+    .overdue-row:hover td { background: #fee2e2 !important; }
+    .days-badge {
+      display: inline-block;
+      font-size: .78rem;
+      font-weight: 600;
+      padding: .2rem .6rem;
+      border-radius: 12px;
+    }
+    .days-badge.on-time  { background: #dcfce7; color: #15803d; }
+    .days-badge.due-soon { background: #fef9c3; color: #b45309; }
+    .days-badge.overdue  { background: #fee2e2; color: var(--red); }
+    .btn-return {
+      background: #1d4ed8;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: .35rem .85rem;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-return:hover { background: #1e40af; }
+    .btn-return:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Admin view ─────────────────────────────────────────────────────── */
+    .admin-container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      width: 100%;
+    }
+    .admin-tabs {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+      padding: .6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      background: var(--white);
+      color: var(--gray);
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: background .2s, color .2s;
+    }
+    .tab-btn:hover { background: #e0f2fe; color: #0369a1; }
+    .tab-btn.active { background: var(--teal); color: #fff; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .panel-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .panel-card h3 { font-size: 1.1rem; color: var(--navy); margin-bottom: 1.1rem; }
+    .add-book-form { display: flex; flex-wrap: wrap; gap: 1rem; }
+    .add-book-form .form-group { flex: 1 1 160px; margin-bottom: 0; }
+    .btn-danger-sm {
+      background: var(--red);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: .3rem .7rem;
+      font-size: .8rem;
+      cursor: pointer;
+    }
+    .btn-danger-sm:hover { background: #b91c1c; }
+    .fine-calculator { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
+    .fine-calculator .form-group { flex: 0 0 180px; margin-bottom: 0; }
+    #fineResult {
+      display: none;
+      margin-top: 1.25rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--teal);
+    }
+    .report-output {
+      margin-top: 1.25rem;
+      background: #0f172a;
+      color: #94d2bd;
+      border-radius: 8px;
+      padding: 1.25rem;
+      font-size: .82rem;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre;
+      display: none;
+    }
+
+    /* ── Fine Modal ─────────────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-box {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 2rem 2.25rem;
+      max-width: 380px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,.3);
+    }
+    .modal-icon { font-size: 2.5rem; margin-bottom: .75rem; }
+    .modal-box h2 { color: var(--navy); font-size: 1.3rem; margin-bottom: .5rem; }
+    .modal-box p  { color: var(--gray); font-size: .9rem; margin-bottom: 1rem; }
+    .modal-fine-amount {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--red);
+      margin-bottom: 1.5rem;
+    }
+    .modal-box .btn { width: 100%; }
+
+    /* ── Toast ──────────────────────────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 1.75rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      background: #1e293b;
+      color: #fff;
+      padding: .75rem 1.5rem;
+      border-radius: 30px;
+      font-size: .9rem;
+      font-weight: 500;
+      box-shadow: 0 4px 16px rgba(0,0,0,.3);
+      z-index: 300;
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+      white-space: nowrap;
+      max-width: 90vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .toast.show    { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: #065f46; }
+    .toast.error   { background: #7f1d1d; }
+
+    /* ── Footer ─────────────────────────────────────────────────────────── */
+    footer {
+      background: var(--navy);
+      color: #64748b;
+      text-align: center;
+      padding: 1.1rem;
+      font-size: .85rem;
+      margin-top: auto;
+    }
+
+    /* ── Responsive ──────────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .page-header { padding: 1.5rem 1.25rem; }
+      .books-container, .loans-container, .admin-container { padding: 0 1rem; }
+      .navbar { padding: .75rem 1rem; }
+      .navbar-links { gap: .5rem; }
+      .admin-tabs { gap: .35rem; }
+      .tab-btn { padding: .5rem .8rem; font-size: .82rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Navbar (hidden until login) ────────────────────────────────────── -->
+  <nav class="navbar" id="navbar">
+    <div class="navbar-brand" onclick="showBooksView()">
+      Uni<span>Lib</span>
+    </div>
+    <div class="navbar-links">
+      <span class="nav-link" onclick="showBooksView()">📚 Books</span>
+      <span class="nav-link" id="nav-myloans" onclick="showMyLoansView()">📋 My Loans</span>
+      <span class="nav-link" id="nav-admin"   onclick="showAdminView()">⚙️ Admin Panel</span>
+      <span class="nav-username" id="nav-username"></span>
+      <button class="nav-logout" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- ╔══════════════════════════════════════════════════════════════════════╗
+       ║  VIEW: LOGIN                                                          ║
+       ╚══════════════════════════════════════════════════════════════════════╝ -->
+  <div class="view" id="view-login" style="display:flex">
+    <div class="login-card">
+      <div class="login-logo">
+        <h1>Uni<span>Lib</span></h1>
+        <p>Student Library Portal</p>
+      </div>
+      <div class="error-msg" id="loginError"></div>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="loginUsername">Username</label>
+          <input type="text" id="loginUsername" placeholder="e.g. student1"
+                 autocomplete="username" required />
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="Enter your password"
+                 autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="btn btn-primary" id="loginBtn">Login</button>
+      </form>
+      <div class="login-hint">
+        <strong>Demo Accounts</strong>
+        Student: <b>student1 / pass123</b><br />
+        Admin: <b>admin / Admin@1234</b>
+      </div>
+    </div>
+  </div>
+
+  <!-- ╔══════════════════════════════════════════════════════════════════════╗
+       ║  VIEW: BOOKS                                                          ║
+       ╚══════════════════════════════════════════════════════════════════════╝ -->
+  <div class="view" id="view-books">
+    <div class="page-header">
+      <h1>📚 Book Catalogue</h1>
+      <p>Browse and borrow from our collection — updated live from Firestore</p>
+    </div>
+    <div class="books-container">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search by title or genre…" />
+        <select id="genreFilter">
+          <option value="all">All Genres</option>
+          <option value="Programming">Programming</option>
+          <option value="Science">Science</option>
+          <option value="History">History</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="loading-wrapper" id="booksLoading">
+        <div class="spinner"></div>
+      </div>
+      <div class="books-grid" id="bookGrid" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- ╔══════════════════════════════════════════════════════════════════════╗
+       ║  VIEW: MY LOANS                                                       ║
+       ╚══════════════════════════════════════════════════════════════════════╝ -->
+  <div class="view" id="view-myloans">
+    <div class="page-header">
+      <h1>📋 My Loans</h1>
+      <p>Track your active borrows and return history</p>
+    </div>
+    <div class="loans-container">
+
+      <div class="section-card">
+        <h2>Active Borrows <span class="count-badge" id="activeCount">0</span></h2>
+        <div id="activeLoansSection">
+          <div class="loading-wrapper"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h2>Return History <span class="count-badge" id="historyCount">0</span></h2>
+        <div id="loanHistorySection">
+          <div class="loading-wrapper"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ╔══════════════════════════════════════════════════════════════════════╗
+       ║  VIEW: ADMIN PANEL                                                    ║
+       ╚══════════════════════════════════════════════════════════════════════╝ -->
+  <div class="view" id="view-admin">
+    <div class="page-header">
+      <h1>⚙️ Admin Panel</h1>
+      <p>Manage books, members, loans, and fines</p>
+    </div>
+    <div class="admin-container">
+
+      <!-- Tab buttons -->
+      <div class="admin-tabs">
+        <button class="tab-btn active" data-tab="books">📚 Books</button>
+        <button class="tab-btn"        data-tab="loans">📖 Active Loans</button>
+        <button class="tab-btn"        data-tab="fines">💰 Fine Calculator</button>
+        <button class="tab-btn"        data-tab="report">📊 Report</button>
+      </div>
+
+      <!-- ── Tab: Books ─────────────────────────────────────────────────── -->
+      <div id="tab-books" class="tab-panel active">
+        <div class="panel-card">
+          <h3>Add New Book</h3>
+          <form id="addBookForm" class="add-book-form">
+            <div class="form-group">
+              <label>Title</label>
+              <input type="text" id="newTitle" placeholder="Book title" required />
+            </div>
+            <div class="form-group">
+              <label>Author</label>
+              <input type="text" id="newAuthor" placeholder="Author name" required />
+            </div>
+            <div class="form-group">
+              <label>Genre</label>
+              <select id="newGenre">
+                <option value="Programming">Programming</option>
+                <option value="Science">Science</option>
+                <option value="History">History</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Year</label>
+              <input type="number" id="newYear" placeholder="e.g. 2020"
+                     min="1900" max="2100" required />
+            </div>
+            <div class="form-group">
+              <label>Copies</label>
+              <input type="number" id="newCopies" placeholder="e.g. 3" min="1" required />
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end">
+              <button type="submit" class="btn btn-primary" style="width:auto">Add Book</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel-card">
+          <h3>All Books</h3>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th><th>Author</th><th>Genre</th>
+                  <th>Year</th><th>Stock</th><th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="adminBooksTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Active Loans ─────────────────────────────────────────── -->
+      <div id="tab-loans" class="tab-panel">
+        <div class="panel-card">
+          <h3>All Active Loans</h3>
+          <p style="color:var(--gray);font-size:.875rem;margin-bottom:1rem">
+            Overdue rows are highlighted in red.
+          </p>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Member</th><th>Book</th><th>Borrowed</th>
+                  <th>Due Date</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="adminLoansTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Fine Calculator ──────────────────────────────────────── -->
+      <div id="tab-fines" class="tab-panel">
+        <div class="panel-card">
+          <h3>Overdue Fine Calculator</h3>
+          <p style="color:var(--gray);font-size:.875rem;margin-bottom:1.25rem">
+            Rate: <strong>RM 0.50 per 2 days overdue</strong>
+            &nbsp;·&nbsp; Uses integer division — see Known Issues
+          </p>
+          <div class="fine-calculator">
+            <div class="form-group">
+              <label>Days Overdue</label>
+              <input type="number" id="daysInput" min="0" placeholder="e.g. 7" />
+            </div>
+            <button id="calcBtn" class="btn btn-primary" style="width:auto">
+              Calculate Fine
+            </button>
+          </div>
+          <div id="fineResult"></div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Report ────────────────────────────────────────────────── -->
+      <div id="tab-report" class="tab-panel">
+        <div class="panel-card">
+          <h3>Generate Library Report</h3>
+          <p style="color:var(--gray);font-size:.875rem;margin-bottom:1.25rem">
+            Open the Books and Loans tabs first to pre-load data, then generate the full report.
+          </p>
+          <button id="reportBtn" class="btn btn-primary" style="width:auto">
+            Generate Report
+          </button>
+          <pre class="report-output" id="reportOutput"></pre>
+        </div>
+      </div>
+
+    </div><!-- /.admin-container -->
+  </div>
+
+  <!-- ── Fine modal ─────────────────────────────────────────────────────── -->
+  <div class="modal-overlay" id="fineModal">
+    <div class="modal-box">
+      <div class="modal-icon">⚠️</div>
+      <h2>Return Fine</h2>
+      <p>This book was returned overdue. Please pay the fine at the library counter.</p>
+      <div class="modal-fine-amount" id="modalFineAmount"></div>
+      <button class="btn btn-primary" onclick="closeModal()">Acknowledged</button>
+    </div>
+  </div>
+
+  <!-- ── Toast notification ─────────────────────────────────────────────── -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+  <footer>
+    <p>&copy; 2024 UniLib — Student Library Portal. Built for SonarCloud lab exercises.</p>
+  </footer>
+
+  <!-- ── Firebase CDN ───────────────────────────────────────────────────── -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>
